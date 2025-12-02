@@ -1,0 +1,257 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: ./docker/airflow/Dockerfile
+  environment:
+    - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+    - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+    - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    - AIRFLOW__WEBSERVER__SECRET_KEY=your_very_secret_key_CHANGE_ME_12345
+    - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
+    - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.session,airflow.api.auth.backend.basic_auth
+    - OWM_API_KEY=${OWM_API_KEY}
+    - MINIO_ENDPOINT=http://minio:9000
+    - MINIO_ROOT_USER=minioadmin
+    - MINIO_ROOT_PASSWORD=minioadmin
+    - AWS_ACCESS_KEY_ID=minioadmin
+    - AWS_SECRET_ACCESS_KEY=minioadmin
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./spark/scripts:/opt/spark/scripts 
+    - ./spark/jars:/opt/spark/extra-jars
+  depends_on:
+    postgres:
+      condition: service_healthy
+    spark-master: 
+      condition: service_started
+  networks:
+    - lakehouse_net
+
+services:
+  # ------ Postgres (Metadata DB cho Airflow) ------
+  postgres:
+    image: postgres:15
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    ports:
+      - "5432:5432"  
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+    - lakehouse_net
+
+  # ------ MinIO (Object Storage) ------
+  minio:
+    image: minio/minio:latest
+    container_name: ${COMPOSE_PROJECT_NAME}-minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000"  # API Port
+      - "9001:9001"  # Console (UI) Port
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+    - lakehouse_net
+    
+  # ------ Airflow Webserver ------
+  airflow-webserver: 
+    <<: *airflow-common  
+    container_name: ${COMPOSE_PROJECT_NAME}-airflow-webserver
+    restart: always
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ------ Airflow Scheduler ------
+  airflow-scheduler:
+    <<: *airflow-common 
+    container_name: ${COMPOSE_PROJECT_NAME}-airflow-scheduler
+    restart: always
+    command: scheduler
+
+  # ------ Airflow Init   ------
+  airflow-init:
+    <<: *airflow-common  
+    container_name: ${COMPOSE_PROJECT_NAME}-airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c  
+      - |
+        airflow db migrate
+        airflow users create \
+          --username admin \
+          --password admin \
+          --firstname Admin \
+          --lastname User \
+          --role Admin \
+          --email admin@example.com
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  spark-master:
+    image: apache/spark:3.5.5
+    container_name: ${COMPOSE_PROJECT_NAME}-spark-master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_EXTRA_CLASSPATH=/opt/spark/extra-jars/hadoop-aws-3.3.4.jar:/opt/spark/extra-jars/aws-java-sdk-bundle-1.12.262.jar:/opt/spark/extra-jars/iceberg-spark-runtime-3.5_2.12-1.5.0.jar:/opt/spark/extra-jars/postgresql-42.7.3.jar
+      - SPARK_SQL_CATALOG_LAKEHOUSE_WAREHOUSE=s3a://silver/
+    ports:
+      - "8081:8080" # Spark Master UI
+      - "7077:7077" # Spark Submit Port
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+      - --host
+      - spark-master
+      - --port
+      - "7077"
+      - --webui-port
+      - "8080"
+    volumes:
+      - ./spark/scripts:/opt/spark/scripts 
+      - ./spark/jars:/opt/spark/extra-jars
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./spark/logs:/opt/spark/logs
+    networks:
+      - lakehouse_net
+
+  spark-worker:
+    image: apache/spark:3.5.5
+    container_name: ${COMPOSE_PROJECT_NAME}-spark-worker
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_EXTRA_CLASSPATH=/opt/spark/extra-jars/hadoop-aws-3.3.4.jar:/opt/spark/extra-jars/aws-java-sdk-bundle-1.12.262.jar:/opt/spark/extra-jars/iceberg-spark-runtime-3.5_2.12-1.5.0.jar:/opt/spark/extra-jars/postgresql-42.7.3.jar
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.worker.Worker
+      - --webui-port
+      - "8081"
+      - spark://spark-master:7077
+    volumes:
+      - ./spark/scripts:/opt/spark/scripts 
+      - ./spark/jars:/opt/spark/extra-jars
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ./spark/logs:/opt/spark/logs
+    depends_on:
+      - spark-master
+    networks:
+      - lakehouse_net
+
+  # ------ Postgres (Metadata DB cho Hive Metastore) ------postgres-metastore:
+  postgres-metastore:
+    image: postgres:15
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres-metastore
+    environment:
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hive
+      - POSTGRES_DB=metastore
+    volumes:
+      - postgres_metastore_data:/var/lib/postgresql/data
+    networks:
+      - lakehouse_net
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "hive"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ------ Hive Metastore------
+  hive-metastore:
+    image: apache/hive:4.0.0  # <-- ĐÃ ĐỔI
+    container_name: ${COMPOSE_PROJECT_NAME}-hive-metastore
+    environment: 
+      - SERVICE_NAME=metastore # Báo cho image chạy ở chế độ metastore
+      - DB_DRIVER=postgres     # Giúp image tự động tải driver postgresql
+      - SERVICE_OPTS= -Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres-metastore:5432/metastore -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hive -Dhive.metastore.warehouse.dir=s3a://silver/ -Dfs.s3a.endpoint=http://minio:9000 -Dfs.s3a.access.key=${MINIO_ROOT_USER} -Dfs.s3a.secret.key=${MINIO_ROOT_PASSWORD} -Dfs.s3a.path.style.access=true -Dfs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
+      - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+      - HADOOP_CONF_DIR=/opt/hive/conf
+      - HADOOP_CLASSPATH=/opt/hive/lib/hadoop-aws-3.3.4.jar:/opt/hive/lib/aws-java-sdk-bundle-1.12.262.jar:/opt/hive/lib/postgresql-42.7.3.jar
+      # -----------------------------------------------
+    ports:
+      - "9083:9083" 
+    networks:
+      - lakehouse_net
+    volumes:
+      - ./hive-metastore/jars/postgresql-42.7.3.jar:/opt/hive/lib/postgresql-42.7.3.jar 
+      - ./spark/jars/hadoop-aws-3.3.4.jar:/opt/hive/lib/hadoop-aws-3.3.4.jar
+      - ./spark/jars/aws-java-sdk-bundle-1.12.262.jar:/opt/hive/lib/aws-java-sdk-bundle-1.12.262.jar 
+      - ./hive-metastore/conf/core-site.xml:/opt/hive/conf/core-site.xml
+    depends_on:
+      postgres-metastore:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # ------ Trino (Query Engine) ------
+  trino-coordinator:
+    image: trinodb/trino:445
+    container_name: ${COMPOSE_PROJECT_NAME}-trino-coordinator
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    ports:
+      - "8090:8080" # Cổng UI/API của Trino
+    volumes:
+      - ./trino/etc:/etc/trino # Mount thư mục config
+      - ./trino/data:/var/trino/data
+    networks:
+      - lakehouse_net
+    depends_on:
+      - hive-metastore
+
+  # ------ Metabase (BI Tool) ------
+  metabase:
+    image: metabase/metabase:latest
+    container_name: ${COMPOSE_PROJECT_NAME}-metabase
+    ports:
+      - "3000:3000"
+    environment: 
+      - MB_DB_FILE=/metabase-data/metabase.db
+    volumes:
+      - metabase_data:/metabase-data
+    networks:
+      - lakehouse_net
+    depends_on:
+      - trino-coordinator
+
+volumes:
+  postgres_data:
+  minio_data:
+  postgres_metastore_data:  
+  metabase_data:
+
+networks:
+  lakehouse_net:
+    driver: bridge

@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+
+# Airflow/Logs/Data
+logs/
+*.log
+
+logs/
+log/
+*.log
+*.log.gz
+*.pid
+
+# Docker
+.env
+*.env
+
+# Dependencies & Jars
+spark/jars/
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Data and runtime artifacts
+data/
+data\var/
+*.gz

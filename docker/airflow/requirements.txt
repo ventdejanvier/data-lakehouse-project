@@ -1,0 +1,6 @@
+apache-airflow-providers-docker
+apache-airflow-providers-postgres 
+apache-airflow-providers-apache-spark==4.10.0
+minio>=7.1.0
+requests 
+pyspark==3.5.5

@@ -1,0 +1,8 @@
+# Yêu cầu Git luôn dùng LF (kiểu Unix) cho tất cả các file text
+* text=auto eol=lf
+
+# Đảm bảo các file script và config của Docker luôn là LF
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
