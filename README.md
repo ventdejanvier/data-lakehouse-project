@@ -1,4 +1,4 @@
-# Xây dựng Data Lakehouse để Phân tích Chất lượng Không khí 
+# Xây dựng Data Lakehouse để phân tích chất lượng không khí 
 
 ![Status](https://img.shields.io/badge/Status-Completed-success)
 ![Subject](https://img.shields.io/badge/Subject-Specialized%20Project-blue)
