@@ -20,10 +20,10 @@
 
 Để giữ cho tài liệu gọn gàng, project được chia thành các phần hướng dẫn chi tiết sau:
 
-1.  **[Kiến trúc Hệ thống](./docs/ARCHITECTURE.md)**: Giải thích chi tiết về luồng dữ liệu Bronze-Silver-Gold và sơ đồ hệ thống.
-2.  **[Công nghệ sử dụng ](./docs/TECH_STACK.md)**: Danh sách các công cụ, phiên bản và vai trò của chúng.
-3.  **[Cài đặt & Triển khai](./docs/INSTALL.md)**: Hướng dẫn chi tiết cách cấu hình Docker, biến môi trường `.env` và khởi chạy hệ thống.
-4.  **[Hướng dẫn Vận hành](./docs/USAGE.md)**: Cách truy cập các giao diện (Airflow, MinIO, App), kích hoạt pipeline và xem dự báo.
+1.  **Kiến trúc Hệ thống**: Giải thích chi tiết về luồng dữ liệu Bronze-Silver-Gold và sơ đồ hệ thống.
+2.  **Công nghệ sử dụng**: Danh sách các công cụ, phiên bản và vai trò của chúng.
+3.  **Cài đặt & Triển khai**: Hướng dẫn chi tiết cách cấu hình Docker, biến môi trường `.env` và khởi chạy hệ thống.
+4.  **Hướng dẫn Vận hành**: Cách truy cập các giao diện (Airflow, MinIO, App), kích hoạt pipeline và xem dự báo.
 
 ## Cấu trúc thư mục 
 
