@@ -10,7 +10,7 @@
 
 ## Giới thiệu 
 
-Đề tài này xây dựng một hệ thống **Data Lakehouse** hiện đại nhằm giải quyết bài toán giám sát và dự báo ô nhiễm không khí.Hệ thống tự động thu thập dữ liệu từ OpenWeatherMap API, lưu trữ tập trung, xử lý làm sạch và tính toán chỉ số chất lượng không khí (AQI) theo quy chuẩn Việt Nam (QCVN 1459/QĐ-TCMT). 
+Đề tài này xây dựng một hệ thống **Data Lakehouse** hiện đại nhằm giải quyết bài toán giám sát và dự báo ô nhiễm không khí.Hệ thống tự động thu thập dữ liệu từ OpenWeatherMap API, lưu trữ tập trung, xử lý làm sạch và tính toán chỉ số chất lượng không khí (AQI) theo quy chuẩn Việt Nam (1459/QĐ-TCMT). 
 
 Đề tài áp dụng kiến trúc **Medallion (Bronze - Silver - Gold)** trên nền tảng Apache Iceberg, giúp nâng cấp Data Lake với khả năng đảm bảo tính toàn vẹn giao dịch (ACID), truy vấn lịch sử (Time Travel) và linh hoạt thay đổi cấu trúc (Schema Evolution).
 
