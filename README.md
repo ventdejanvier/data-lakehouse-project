@@ -83,7 +83,7 @@ Dự án sử dụng các công nghệ mã nguồn mở hiện đại trong lĩ
 
 ## 2. Clone mã nguồn dự án
 ```bash
-git clone [https://github.com/ventdejanvier/data-lakehouse-project.git](https://github.com/ventdejanvier/data-lakehouse-project.git)
+git clone https://github.com/ventdejanvier/data-lakehouse-project.git
 cd air-quality-lakehouse
 ```
 
