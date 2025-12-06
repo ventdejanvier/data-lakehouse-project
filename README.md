@@ -25,7 +25,7 @@
 3.  **[Cài đặt & Triển khai](./docs/INSTALL.md)**: Hướng dẫn chi tiết cách cấu hình Docker, biến môi trường `.env` và khởi chạy hệ thống.
 4.  **[Hướng dẫn Vận hành](./docs/USAGE.md)**: Cách truy cập các giao diện (Airflow, MinIO, App), kích hoạt pipeline và xem dự báo.
 
-## Cấu trúc thư mục (Directory Structure)
+## Cấu trúc thư mục 
 
 ```bash
 DATA-LAKEHOUSE-PROJECT/
