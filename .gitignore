@@ -1,31 +1,54 @@
-# Python
+# --- System & IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# --- Python ---
 __pycache__/
 *.pyc
+# Môi trường ảo 
+.venv/
+venv/
+env/
+*.egg-info/
 
-# Airflow/Logs/Data
-logs/
-*.log
+# --- Secrets & Environment (RẤT QUAN TRỌNG) ---
+.env
+*.env
+.streamlit/secrets.toml
 
+# --- Logs ---
 logs/
-log/
 *.log
 *.log.gz
 *.pid
+spark/logs/
+hive-metastore/logs/
 
-# Docker
-.env
-*.env
+# --- Docker & Runtime Data ---
+postgres_data/
+minio_data/
+metabase_data/
 
-# Dependencies & Jars
+# --- Spark Artifacts ---
 spark/jars/
+# Thư mục warehouse mặc định nếu chạy local
+spark-warehouse/
+metastore_db/
+derby.log
 
-# IDE/OS
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
+# --- Hive Metastore ---
+hive-metastore/jars/
 
-# Data and runtime artifacts
-data/
-data\var/
+# --- Trino ---
+trino/data/
+
+# --- Data & Outputs ---
+aqi_data.csv
+spark/scripts/gold_data_export/
+# Dữ liệu nén hoặc tạm
 *.gz
+*.zip
+data/

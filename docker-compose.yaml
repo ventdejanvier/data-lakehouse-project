@@ -29,7 +29,7 @@ x-airflow-common: &airflow-common
     - lakehouse_net
 
 services:
-  # ------ Postgres (Metadata DB cho Airflow) ------
+  # Postgres (Metadata DB cho Airflow)
   postgres:
     image: postgres:15
     container_name: ${COMPOSE_PROJECT_NAME}-postgres
@@ -49,7 +49,7 @@ services:
     networks:
     - lakehouse_net
 
-  # ------ MinIO (Object Storage) ------
+  # MinIO (Object Storage)
   minio:
     image: minio/minio:latest
     container_name: ${COMPOSE_PROJECT_NAME}-minio
@@ -70,7 +70,7 @@ services:
     networks:
     - lakehouse_net
     
-  # ------ Airflow Webserver ------
+  # Airflow Webserver
   airflow-webserver: 
     <<: *airflow-common  
     container_name: ${COMPOSE_PROJECT_NAME}-airflow-webserver
@@ -84,14 +84,14 @@ services:
       timeout: 5s
       retries: 5
 
-  # ------ Airflow Scheduler ------
+  # Airflow Scheduler
   airflow-scheduler:
     <<: *airflow-common 
     container_name: ${COMPOSE_PROJECT_NAME}-airflow-scheduler
     restart: always
     command: scheduler
 
-  # ------ Airflow Init   ------
+  # Airflow Init
   airflow-init:
     <<: *airflow-common  
     container_name: ${COMPOSE_PROJECT_NAME}-airflow-init
@@ -166,7 +166,7 @@ services:
     networks:
       - lakehouse_net
 
-  # ------ Postgres (Metadata DB cho Hive Metastore) ------postgres-metastore:
+  # ------ Postgres (Metadata DB cho Hive Metastore) ------ postgres-metastore:
   postgres-metastore:
     image: postgres:15
     container_name: ${COMPOSE_PROJECT_NAME}-postgres-metastore
@@ -174,6 +174,9 @@ services:
       - POSTGRES_USER=hive
       - POSTGRES_PASSWORD=hive
       - POSTGRES_DB=metastore
+      - PGTZ=Asia/Ho_Chi_Minh
+    ports:
+      - "5433:5432"
     volumes:
       - postgres_metastore_data:/var/lib/postgresql/data
     networks:
@@ -184,9 +187,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # ------ Hive Metastore------
+  # Hive Metastore
   hive-metastore:
-    image: apache/hive:4.0.0  # <-- ĐÃ ĐỔI
+    image: apache/hive:4.0.0 
     container_name: ${COMPOSE_PROJECT_NAME}-hive-metastore
     environment: 
       - SERVICE_NAME=metastore # Báo cho image chạy ở chế độ metastore
@@ -198,7 +201,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
       - HADOOP_CONF_DIR=/opt/hive/conf
       - HADOOP_CLASSPATH=/opt/hive/lib/hadoop-aws-3.3.4.jar:/opt/hive/lib/aws-java-sdk-bundle-1.12.262.jar:/opt/hive/lib/postgresql-42.7.3.jar
-      # -----------------------------------------------
     ports:
       - "9083:9083" 
     networks:
@@ -214,7 +216,7 @@ services:
       minio:
         condition: service_healthy
 
-  # ------ Trino (Query Engine) ------
+  # Trino (Query Engine) 
   trino-coordinator:
     image: trinodb/trino:445
     container_name: ${COMPOSE_PROJECT_NAME}-trino-coordinator
@@ -231,7 +233,7 @@ services:
     depends_on:
       - hive-metastore
 
-  # ------ Metabase (BI Tool) ------
+  # Metabase
   metabase:
     image: metabase/metabase:latest
     container_name: ${COMPOSE_PROJECT_NAME}-metabase

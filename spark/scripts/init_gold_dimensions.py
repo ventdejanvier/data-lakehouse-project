@@ -1,5 +1,5 @@
 import os
-import shutil # <-- Thư viện hỗ trợ xóa file/thư mục
+import shutil  
 from pyspark.sql import SparkSession
 
 def main():
@@ -21,7 +21,6 @@ def main():
     # Đường dẫn xuất file
     output_path = "/opt/spark/scripts/gold_data_export"
 
-    # --- BƯỚC 1: DỌN DẸP THỦ CÔNG (QUAN TRỌNG) ---
     print(f"Đang kiểm tra và dọn dẹp thư mục: {output_path}")
     if os.path.exists(output_path):
         try:
@@ -31,8 +30,7 @@ def main():
         except OSError as e:
             print(f" Cảnh báo: Không thể xóa thư mục cũ. Lỗi: {e}")
     else:
-        print("Thư mục chưa tồn tại, sẵn sàng ghi mới.")
-    # ---------------------------------------------
+        print("Thư mục chưa tồn tại, sẵn sàng ghi mới.") 
 
     print("--- Đang đọc dữ liệu Gold... ---")
     

@@ -104,29 +104,29 @@ def main():
 
         #AGGREGATION:
         df_agg = df_target.groupBy("measure_date").agg(
-            # 1. OWM AQI
+            # OWM AQI
             spark_round(avg("aqi_level"), 2).alias("avg_aqi"),
             max("aqi_level").alias("max_aqi"),
             min("aqi_level").alias("min_aqi"),
             
-            # 2. PM (Avg & Max)
+            # PM (Avg & Max)
             spark_round(avg("pm2_5"), 2).alias("avg_pm2_5"),
             max("pm2_5").alias("max_pm2_5"),   
             spark_round(avg("pm10"), 2).alias("avg_pm10"),
             max("pm10").alias("max_pm10"),      
             
-            # 3. Max 1h Gases (để Tính VN_AQI)
+            # Max 1h Gases (để Tính VN_AQI)
             spark_round(max("co"), 2).alias("max_1h_co"),
             spark_round(max("no2"), 2).alias("max_1h_no2"),
             spark_round(max("so2"), 2).alias("max_1h_so2"),
             spark_round(max("o3"), 2).alias("max_1h_o3"),
             
-            # 4. Max 8h O3 (Quality check)
+            # Max 8h O3 (Quality check)
             spark_round(max(
                 when(col("count_8h_o3") >= 6, col("rolling_8h_o3")).otherwise(lit(None))
             ), 2).alias("max_8h_o3"),
             
-            # 5. Avg Gases 
+            # Avg Gases 
             spark_round(avg("co"), 2).alias("avg_co"),
             spark_round(avg("no2"), 2).alias("avg_no2"),
             spark_round(avg("so2"), 2).alias("avg_so2"),

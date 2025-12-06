@@ -178,7 +178,7 @@ def upsert_to_silver(spark, df_silver):
     print("Đã thực hiện MERGE (Upsert) vào bảng Silver thành công.")
 
 def main():
-    # 1. Parse tham số ngày từ Airflow
+    # Parse tham số ngày từ Airflow
     parser = argparse.ArgumentParser()
     parser.add_argument("--process-date", required=True, help="Format YYYY-MM-DD")
     args = parser.parse_args()

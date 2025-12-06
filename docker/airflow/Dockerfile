@@ -7,8 +7,7 @@ ARG AIRFLOW_GID=0
 
 # Chuyển sang user root để cài đặt
 USER root
-
-# --- SỬA LỖI: CÀI ĐẶT JAVA 17 ---
+ 
 # Debian 12 (Bookworm) dùng openjdk-17 làm mặc định
 RUN apt-get update && \
     apt-get install -y --no-install-recommends openjdk-17-jre-headless && \
@@ -26,5 +25,4 @@ COPY ./docker/airflow/requirements.txt /
 # ---------------------------------
 
 # Chạy lệnh pip install để cài đặt các thư viện
-# (Bao gồm cả 'pyspark' bạn đã thêm ở bước trước)
 RUN pip install --no-cache-dir -r /requirements.txt

@@ -45,9 +45,9 @@ def _parse_minio_endpoint(raw_url):
     dag_id="ingest_batch_owm",  
     start_date=datetime(2020, 11, 25), 
     schedule_interval="@daily",
-    # Quan trọng: Cho phép Airflow chạy bù
+    #Cho phép Airflow chạy bù
     catchup=True,
-    max_active_runs=3, # Limit concurrent DAG Runs to stay within API quotas
+    max_active_runs=3, 
     tags=["ingest", "batch", "bronze", "owm", "air-quality"],
 )
 def ingest_batch_owm_dag():
@@ -63,7 +63,7 @@ def ingest_batch_owm_dag():
             f"{endpoint_host}:{endpoint_port}",
             access_key=MINIO_ACCESS_KEY,
             secret_key=MINIO_SECRET_KEY,
-            secure=False # V? ch?y local
+            secure=False 
         )
 
     @task(
@@ -134,5 +134,4 @@ def ingest_batch_owm_dag():
     # Truyền execution_date (dưới dạng '{{ ds }}') vào task
     fetch_historical_owm_by_day(city_info=CITY_INFO, execution_date="{{ ds }}")
 
-# Gọi DAG
 ingest_batch_owm_dag()

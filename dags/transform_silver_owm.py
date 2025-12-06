@@ -9,7 +9,7 @@ from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOpe
     start_date=datetime(2020, 11, 25),
     schedule_interval="@daily",
     catchup=True,
-    max_active_runs=3,  # Chay tu tu tung ngay de tranh chiem RAM
+    max_active_runs=3,  
     concurrency=3,
     tags=["transform", "silver", "spark", "owm", "iceberg"],
 )
@@ -19,7 +19,7 @@ def transform_silver_owm_dag():
     tu tang Bronze (JSON) sang tang Silver (bang Iceberg).
     """
 
-    # Read env at parse time so we avoid Jinja template errors when Variables/env are missing in Airflow.
+    # Đọc env lúc parse để tránh lỗi khi thiếu variables/env trong Airflow.
     minio_endpoint = os.getenv("MINIO_ENDPOINT", "http://minio:9000")
     minio_access_key = os.getenv("MINIO_ROOT_USER") or os.getenv("MINIO_ACCESS_KEY") or ""
     minio_secret_key = os.getenv("MINIO_ROOT_PASSWORD") or os.getenv("MINIO_SECRET_KEY") or ""
@@ -40,11 +40,11 @@ def transform_silver_owm_dag():
         conf={
             "spark.driver.extraClassPath": "/opt/spark/extra-jars/hadoop-aws-3.3.4.jar:/opt/spark/extra-jars/iceberg-spark-runtime-3.5_2.12-1.5.0.jar:/opt/spark/extra-jars/postgresql-42.7.3.jar:/opt/spark/extra-jars/aws-java-sdk-bundle-1.12.262.jar",
             "spark.executor.extraClassPath": "/opt/spark/extra-jars/hadoop-aws-3.3.4.jar:/opt/spark/extra-jars/iceberg-spark-runtime-3.5_2.12-1.5.0.jar:/opt/spark/extra-jars/postgresql-42.7.3.jar:/opt/spark/extra-jars/aws-java-sdk-bundle-1.12.262.jar",
-            # Increase heap + overhead to avoid OOM during Parquet/Iceberg writes
+            # Tăng heap + overhead để tránh lỗi tràn bộ nhớ khi ghi Parquet/Iceberg
             "spark.driver.memory": "1g",
             "spark.executor.memory": "1g",
             "spark.executor.memoryOverhead": "512m",
-            # Push warehouse and shuffle sizing to MinIO-friendly values
+            # Điều chỉnh sizing của warehouse và shuffle về các giá trị tối ưu cho MinIO
             "spark.sql.warehouse.dir": "s3a://silver/",
             "spark.sql.shuffle.partitions": "200",
             "spark.sql.files.maxPartitionBytes": "32m",

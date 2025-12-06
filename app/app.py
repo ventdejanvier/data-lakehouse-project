@@ -209,7 +209,7 @@ if page == "Dashboard":
 # ==============================================================================
 elif page == "Analytics":
     st.title("Advanced Analytics Dashboard")
-    st.caption("Hệ thống báo cáo phân tích chuyên sâu từ Data Lakehouse (Trino Engine)")
+    st.caption("In-depth Analytical Reporting System from Data Lakehouse (Trino Engine)")
 
     # --- HÀM TẠO URL BẢO MẬT (Viết 1 lần dùng cho cả 3) ---
     def get_metabase_url(dashboard_id):
@@ -263,44 +263,172 @@ elif page == "Analytics":
 # 3. FORECASTING
 # ==============================================================================
 elif page == "Forecasting":
-    st.title("Forecast of air quality indexes")
+
+    st.title("Forecast of Air Quality Indexes")
+
     
+
     if df_main is not None:
+
+        # --- INPUT CONFIGURATION ---
+
         with st.container():
+
             c1, c2, c3 = st.columns([2, 2, 1])
-            # Chọn chỉ số (Full 8 chất)
+
+            
+
+            # Chọn chỉ số
+
             target = c1.selectbox("Target Metric", 
+
                 ["vn_aqi", "avg_pm2_5", "avg_pm10", "avg_co", "avg_no2", "avg_so2", "avg_o3"], 
+
                 format_func=str.upper)
+
+            
+
+            # Chọn số ngày dự báo
+
             days = c2.slider("Horizon (Days)", 7, 90, 30)
+
+            
+
             c3.write("")
-            c3.write("")
+
+            c3.write("") # Spacer để nút Run thẳng hàng với input
+
             run = c3.button("Run", type="primary", use_container_width=True)
+
         
+
         st.divider()
+
         
+
+        # --- MODELING & VISUALIZATION ---
+
         if run:
-            with st.spinner('Training Prophet Model...'):
-                df_p = df_main[['measure_date', target]].rename(columns={'measure_date': 'ds', target: 'y'}).dropna()
-                m = Prophet(daily_seasonality=True)
-                m.fit(df_p)
-                future = m.make_future_dataframe(periods=days)
-                forecast = m.predict(future)
-                
-                fig = go.Figure()
-                # Vẽ đường thực tế (Màu xám nhạt để làm nền)
-                fig.add_trace(go.Scatter(x=df_p['ds'], y=df_p['y'], name='Actual', 
-                                        line=dict(color='#E5E7EB', width=1.5)))
-                # Vẽ đường dự báo (Màu chủ đạo)
-                fig.add_trace(go.Scatter(x=forecast['ds'].tail(days), y=forecast['yhat'].tail(days), name='Forecast', 
-                                        line=dict(color='#2563EB', width=2)))
-                
-                fig.update_layout(template="plotly_white", hovermode="x unified", height=500, 
-                                  title=f"{target.upper()} Forecast ({days} days)")
-                st.plotly_chart(fig, use_container_width=True)
+
+            with st.spinner(f'Training Prophet Model for {target.upper()}...'):
+
+                try:
+
+                    # 1. Prepare Data & Clean Outliers (Cách 3 - Đơn giản hóa bằng Quantile)
+                    df_p = df_main[['measure_date', target]].rename(columns={'measure_date': 'ds', target: 'y'}).dropna()
+                    
+                    # Loại bỏ các giá trị quá cao bất thường (Top 1% cao nhất coi là nhiễu)
+                    q99 = df_p['y'].quantile(0.99)
+                    df_p.loc[df_p['y'] > q99, 'y'] = None 
+
+                    # 2. Train Model (NÂNG CẤP: Cách 1 & 2)
+                    # changepoint_prior_scale=0.1: Giúp model linh hoạt hơn với biến động
+                    # seasonality_mode='multiplicative': Phù hợp nếu biên độ dao động tăng theo thời gian
+                    m = Prophet(
+                        daily_seasonality=True,
+                        changepoint_prior_scale=0.1, 
+                        seasonality_prior_scale=10.0 
+                    )
+                    
+                    # Thêm lịch nghỉ lễ Việt Nam (Quan trọng cho dịp Tết)
+                    m.add_country_holidays(country_name='VN') 
+                    
+                    m.fit(df_p)
+                    
+                    # 3. Predict
+                    future = m.make_future_dataframe(periods=days)
+                    forecast = m.predict(future)
+
+                        
+
+                    # Lấy phần dự báo tương lai
+                    forecast_segment = forecast.tail(days).copy()
+                    
+                    # [FIX 1] Nối liền nét: Thêm điểm cuối cùng của thực tế vào đầu danh sách dự báo
+                    last_actual_date = df_p['ds'].iloc[-1]
+                    last_actual_val = df_p['y'].iloc[-1]
+                    
+                    # Tạo một dòng "neo" để nối
+                    anchor_row = pd.DataFrame({
+                        'ds': [last_actual_date],
+                        'yhat': [last_actual_val],
+                        'yhat_lower': [last_actual_val],
+                        'yhat_upper': [last_actual_val]
+                    })
+                    
+                    # Gộp dòng neo vào đầu forecast_segment
+                    forecast_segment = pd.concat([anchor_row, forecast_segment], ignore_index=True)
+
+                    # [FIX 2] Chặn số âm: Set tất cả giá trị < 0 thành 0
+                    cols_to_clip = ['yhat', 'yhat_lower', 'yhat_upper']
+                    for col in cols_to_clip:
+                        forecast_segment[col] = forecast_segment[col].clip(lower=0)
+
+                   
+
+                    # --- VISUALIZATION ---
+                    tab1, tab2 = st.tabs(["Zoomed View", "Full History"])
+
+                    with tab1:
+                        lookback_days = 90
+                        past_segment = df_p.tail(lookback_days)
+                        
+                        fig_zoom = go.Figure()
+
+                        # 1. Vùng tin cậy
+                        fig_zoom.add_trace(go.Scatter(
+                            x=pd.concat([forecast_segment['ds'], forecast_segment['ds'][::-1]]),
+                            y=pd.concat([forecast_segment['yhat_upper'], forecast_segment['yhat_lower'][::-1]]),
+                            fill='toself',
+                            fillcolor='rgba(37, 99, 235, 0.2)',
+                            line=dict(color='rgba(255,255,255,0)'),
+                            hoverinfo="skip",
+                            name='Confidence Interval'
+                        ))
+
+                        # 2. Đường thực tế
+                        fig_zoom.add_trace(go.Scatter(
+                            x=past_segment['ds'], y=past_segment['y'], 
+                            name='Recent Actual', 
+                            line=dict(color='#4B5563', width=2)
+                        ))
+
+                        # 3. Đường dự báo (đã được nối liền)
+                        fig_zoom.add_trace(go.Scatter(
+                            x=forecast_segment['ds'], y=forecast_segment['yhat'], 
+                            name='Forecast', 
+                            mode='lines+markers', 
+                            marker=dict(size=4),
+                            line=dict(color='#2563EB', width=3)
+                        ))
+
+                        fig_zoom.update_layout(
+                            title=f"Short-term Forecast: {target.upper()}",
+                            template="plotly_white", 
+                            hovermode="x unified", 
+                            height=500,
+                            legend=dict(orientation="h", y=1.1)
+                        )
+                        st.plotly_chart(fig_zoom, use_container_width=True)
+
+                    with tab2:
+                        fig_full = go.Figure()
+                        fig_full.add_trace(go.Scatter(x=df_p['ds'], y=df_p['y'], name='Historical', 
+                                                line=dict(color='#E5E7EB', width=1)))
+                        fig_full.add_trace(go.Scatter(x=forecast_segment['ds'], y=forecast_segment['yhat'], name='Forecast', 
+                                                line=dict(color='#DC2626', width=2)))
+                        
+                        fig_full.update_layout(
+                            title=f"Full History: {target.upper()}",
+                            template="plotly_white", hovermode="x unified", height=450
+                        )
+                        st.plotly_chart(fig_full, use_container_width=True)
+
+                except Exception as e:
+                    st.error(f"Error: {e}")
     else:
         st.warning("Please sync data first.")
-
+        
 # ==============================================================================
 # 4. SYSTEM ADMIN (PIPELINE CONTROL)
 # ==============================================================================

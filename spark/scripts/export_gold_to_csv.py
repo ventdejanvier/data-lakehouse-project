@@ -19,7 +19,7 @@ def main():
 
     print("Đang xuất dữ liệu tầng Gold")
     
-    # Query lấy TẤT CẢ các cột cần thiết
+    # Query lấy tất cả các cột cần thiết
     df_report = spark.sql("""
         SELECT 
             f.measure_date,
