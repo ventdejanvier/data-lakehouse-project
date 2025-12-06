@@ -10,9 +10,11 @@
 
 ## Giới thiệu 
 
-Đề tài này xây dựng một hệ thống **Data Lakehouse** hiện đại nhằm giải quyết bài toán giám sát và dự báo ô nhiễm không khí. [cite_start]Hệ thống tự động thu thập dữ liệu từ OpenWeatherMap API, lưu trữ tập trung, xử lý làm sạch và tính toán chỉ số chất lượng không khí (AQI) theo quy chuẩn Việt Nam (QCVN 1459/QĐ-TCMT) [cite: 376-378]. 
+Đề tài này xây dựng một hệ thống **Data Lakehouse** hiện đại nhằm giải quyết bài toán giám sát và dự báo ô nhiễm không khí.Hệ thống tự động thu thập dữ liệu từ OpenWeatherMap API, lưu trữ tập trung, xử lý làm sạch và tính toán chỉ số chất lượng không khí (AQI) theo quy chuẩn Việt Nam (QCVN 1459/QĐ-TCMT). 
 
-[cite_start]Đề tài áp dụng kiến trúc **Medallion (Bronze - Silver - Gold)** trên nền tảng Apache Iceberg, giúp nâng cấp Data Lake với khả năng đảm bảo tính toàn vẹn giao dịch (ACID), truy vấn lịch sử (Time Travel) và linh hoạt thay đổi cấu trúc (Schema Evolution) [cite: 226-228].
+Đề tài áp dụng kiến trúc **Medallion (Bronze - Silver - Gold)** trên nền tảng Apache Iceberg, giúp nâng cấp Data Lake với khả năng đảm bảo tính toàn vẹn giao dịch (ACID), truy vấn lịch sử (Time Travel) và linh hoạt thay đổi cấu trúc (Schema Evolution).
+
+
 
 ## Tài liệu chi tiết 
 
@@ -69,7 +71,9 @@ Dự án sử dụng các công nghệ mã nguồn mở hiện đại trong lĩ
 | **Visualization** | **Streamlit** | Latest | Framework Python để xây dựng ứng dụng  |
 | **Machine Learning** | **Facebook Prophet** | Latest | Thuật toán dự báo chuỗi thời gian (Time-series Forecasting) cho chỉ số AQI. |
 
-#Hướng dẫn Cài đặt & Triển khai (Installation)
+---
+
+# Hướng dẫn Cài đặt & Triển khai (Installation)
 
 ## 1. Yêu cầu hệ thống 
 * **Docker Desktop** (Đảm bảo Docker Engine và Docker Compose đã được cài đặt).
@@ -161,6 +165,7 @@ Bạn cần cài đặt các thư viện Python mà ứng dụng yêu cầu (Str
 ```bash
 pip install streamlit plotly prophet pandas pyjwt
 ```
+--- 
 
 # Hướng dẫn Vận hành 
 
@@ -214,7 +219,7 @@ Truy cập địa chỉ `http://localhost:8501` trên trình duyệt để mở 
 
 * **Analytics (Phân tích chuyên sâu):**
     * **Tích hợp Metabase:** Hiển thị các Dashboard từ nền tảng Metabase trực tiếp trong ứng dụng thông qua cơ chế xác thực bảo mật JWT.
-    * [cite_start]**Phân tích nâng cao:** Cung cấp các biểu đồ chuyên sâu về tương quan giữa các chất ô nhiễm và mô hình phân bố theo thời gian [cite: 696-697].
+    * **Phân tích nâng cao:** Cung cấp các biểu đồ chuyên sâu về tương quan giữa các chất ô nhiễm và mô hình phân bố theo thời gian.
 
 * **Forecasting (Dự báo AI):**
     * **Cấu hình tham số:** Chọn chỉ số mục tiêu (ví dụ: `VN_AQI`, `PM2.5`,...) và số ngày cần xem dự báo.
