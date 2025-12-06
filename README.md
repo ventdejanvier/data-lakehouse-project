@@ -1,5 +1,4 @@
-# Xây dựng Data Lakehouse để Phân tích Chất lượng Không khí
-# (Building a Data Lakehouse for Air Quality Analysis)
+# Xây dựng Data Lakehouse để Phân tích Chất lượng Không khí 
 
 ![Status](https://img.shields.io/badge/Status-Completed-success)
 ![Subject](https://img.shields.io/badge/Subject-Specialized%20Project-blue)
@@ -46,10 +45,15 @@ DATA-LAKEHOUSE-PROJECT/
 ├── docker-compose.yaml             # File triển khai hạ tầng 
 └── README.md                       # Tài liệu hướng dẫn sử dụng
 
+```
+---
+
 # Kiến trúc Hệ thống 
 ![Sơ đồ luồng dữ liệu](image/structure.png)
 
-# Công nghệ sử dụng (Tech Stack)
+---
+
+# Công nghệ sử dụng  
 
 Dự án sử dụng các công nghệ mã nguồn mở hiện đại trong lĩnh vực Kỹ thuật dữ liệu (Data Engineering).
 
@@ -77,6 +81,7 @@ Dự án sử dụng các công nghệ mã nguồn mở hiện đại trong lĩ
 ```bash
 git clone [https://github.com/ventdejanvier/data-lakehouse-project.git](https://github.com/ventdejanvier/data-lakehouse-project.git)
 cd air-quality-lakehouse
+```
 
 ## 3. Thiết lập biến môi trường (.env)
 
@@ -107,6 +112,8 @@ MINIO_ROOT_PASSWORD=minioadmin
 # và dán API Key của bạn vào dưới đây:
 OWM_API_KEY=your_api_key_here
 
+```
+
 ## 4. Khởi động môi trường Docker
 
 Sau khi đã có file cấu hình `.env`, bạn sử dụng Docker Compose để dựng toàn bộ hệ thống.
@@ -115,13 +122,14 @@ Mở terminal tại thư mục gốc của dự án và chạy lệnh sau:
 
 ```bash
 docker-compose up -d --build
-
+```
 > **Lưu ý quan trọng:** Lần đầu tiên khởi chạy, quá trình này có thể mất từ **5-10 phút** để tải xuống các Docker images.
 
 Để kiểm tra xem các dịch vụ đã khởi động thành công chưa, bạn hãy chạy lệnh:
 
 ```bash
 docker-compose ps
+```
 
 ## 5. Cài đặt môi trường cho Ứng dụng (Streamlit)
 
@@ -133,6 +141,7 @@ Mở một terminal mới (không tắt terminal đang chạy Docker) và thực
 
 ```bash
 python -m venv .venv
+```
 
 **Bước 2: Kích hoạt môi trường**
 
@@ -151,6 +160,7 @@ Bạn cần cài đặt các thư viện Python mà ứng dụng yêu cầu (Str
 
 ```bash
 pip install streamlit plotly prophet pandas pyjwt
+```
 
 # Hướng dẫn Vận hành 
 
@@ -191,6 +201,7 @@ Tại terminal (đã kích hoạt môi trường ảo `.venv`), chạy lệnh sa
 
 ```bash
 streamlit run app/app.py
+```
 
 Truy cập địa chỉ `http://localhost:8501` trên trình duyệt để mở ứng dụng.
 
